@@ -119,3 +119,47 @@ function is_symplectic(S)
     end
     return false
 end
+
+
+function pre_iwasawa(S)
+    n, m = size(S)
+    ell = div(n, 2)
+    A = S[1:ell, 1:ell]
+    B = S[1:ell, ell+1:2*ell]
+    C = S[ell+1:2*ell, 1:ell]
+    D = S[ell+1:2*ell, ell+1:2*ell]
+    A0 = normal_sqrtm(Symmetric(A * A' + B * B'))
+    A0inv = inv(A0)
+    X = A0inv * A
+    Y = A0inv * B
+    C0 = (C * A' + D * B') * A0inv
+    idell = Matrix(1.0I, ell, ell)
+    zeroell = 0 * idell
+    E = [idell zeroell; C0*A0inv idell]
+    D = [A0 zeroell; zeroell A0inv]
+    F = [X Y; -Y X]
+    return E, D, F
+end
+
+function iwasawa(S)
+    n, m = size(S)
+    ell = div(n, 2)
+    E, D, F = pre_iwasawa(S)
+    DNN = D[1:ell, 1:ell]
+    Q, R = qr(DNN)
+    R = R'
+    Q = Q'
+    dR = diag(R)
+    dd = abs.(dR)
+    ds = sign.(dR)
+    R = R * diagm(1 ./ dR)
+    RinvT = inv(R)'
+    DD = vcat(dd, 1 ./ dd)
+    zeroell = Matrix(0.0I, ell, ell)
+    OO = [R zeroell; zeroell RinvT]
+    Q = diagm(ds) * Q
+    AA = [Q zeroell; zeroell Q]
+    EE = E * OO
+    FF = AA * F
+    return EE, DD, FF
+end
