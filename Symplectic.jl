@@ -46,32 +46,32 @@ function takagi(M)
     u, s, v = svd(M)
     pref = u' * conj(v)
     pref12 = normal_sqrtm(pref)
-    return s, u*pref12
+    return s, u * pref12
 end
 
 function bloch_messiah(S)
     u, d, v = svd(S)
     P = v * diagm(d) * v'
     O = u * v'
-    n,m = size(P)
-    ell = div(n,2)
-    A = P[1:ell,1:ell]
-    B = P[ell+1:2*ell,1:ell]
-    C = P[ell+1:2*ell,ell+1:2*ell]
-    M = A-C+im*(B+B')
+    n, m = size(P)
+    ell = div(n, 2)
+    A = P[1:ell, 1:ell]
+    B = P[ell+1:2*ell, 1:ell]
+    C = P[ell+1:2*ell, ell+1:2*ell]
+    M = A - C + im * (B + B')
     Lam, W = takagi(M)
-    Lam = 0.5*Lam
+    Lam = 0.5 * Lam
     OO = [real(W) -imag(W); imag(W) real(W)]
-    sqrt1pLam2 = sqrt.(Lam.^2 .+ 1)
-    D = vcat(Lam+sqrt1pLam2,-Lam+sqrt1pLam2)
+    sqrt1pLam2 = sqrt.(Lam .^ 2 .+ 1)
+    D = vcat(Lam + sqrt1pLam2, -Lam + sqrt1pLam2)
     lO = O * OO
     rO = OO'
     return lO, D, rO
 end
 
 function williamson(SS)
-    n,m = size(S)
-    ell = div(n,2)
+    n, m = size(S)
+    ell = div(n, 2)
     sqrtSS = sqrt(Symmetric(SS))
     sqrtinvSS = inv(sqrtSS)
     psi = sqrtinvSS * premultiplyOmega(sqrtinvSS)
@@ -79,11 +79,11 @@ function williamson(SS)
     perm = Array(1:2*ell)
     for i = 1:ell
         if vals[2*i-1, 2*i] <= 0
-            perm[2*i-1], perm[2*i] = (perm[2*i], perm[2*i-1]) 
+            perm[2*i-1], perm[2*i] = (perm[2*i], perm[2*i-1])
         end
     end
-    
-    phi = abs.(diag(vals,1)[[1:2:2*ell;]])
+
+    phi = abs.(diag(vals, 1)[[1:2:2*ell;]])
     perm = vcat(perm[[1:2:2*ell;]], perm[[2:2:2*ell;]])
     phi = vcat(phi, phi)
     O = sqrtSS * Otilde[:, perm] * diagm(sqrt.(phi))
@@ -93,29 +93,29 @@ end
 
 function sympmat(ell)
     idell = Matrix(1.0I, ell, ell)
-    zeroell = 0*idell
+    zeroell = 0 * idell
     return [zeroell idell; -idell zeroell]
 end
 
 function premultiplyOmega(S)
-    n,m = size(S)
-    ell = div(n,2)
-    A = S[1:ell,1:ell]
-    B = S[1:ell,ell+1:2*ell]
-    C = S[ell+1:2*ell,1:ell]
-    D = S[ell+1:2*ell,ell+1:2*ell]
+    n, m = size(S)
+    ell = div(n, 2)
+    A = S[1:ell, 1:ell]
+    B = S[1:ell, ell+1:2*ell]
+    C = S[ell+1:2*ell, 1:ell]
+    D = S[ell+1:2*ell, ell+1:2*ell]
     return [C D; -A -B]
 end
 
 function is_symplectic(S)
-    n,m = size(S)
-    if n%2 !=0 || m%2 !=0
+    n, m = size(S)
+    if n % 2 != 0 || m % 2 != 0
         return false
     end
-    n = div(n,2)
+    n = div(n, 2)
     omega = sympmat(n)
     if isapprox(S * premultiplyOmega(S'), omega)
         return true
     end
     return false
-end    
+end
