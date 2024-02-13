@@ -128,7 +128,7 @@ function pre_iwasawa(S)
     B = S[1:ell, ell+1:2*ell]
     C = S[ell+1:2*ell, 1:ell]
     D = S[ell+1:2*ell, ell+1:2*ell]
-    A0 = normal_sqrtm(Symmetric(A * A' + B * B'))
+    A0 = sqrt(Symmetric(A * A' + B * B'))
     A0inv = inv(A0)
     X = A0inv * A
     Y = A0inv * B
