@@ -1,1 +1,1 @@
-# Symplectic.jl
+# SymplecticDecompositions.jl
