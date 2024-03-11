@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
 - family-names: "Quesada"
-  given-names: "Nicolas"
+  given-names: "Nicolás"
   orcid: "https://orcid.org/0000-0002-0175-1688"
 title: "SymplecticDecompositions.jl"
 version: 0.0.1
