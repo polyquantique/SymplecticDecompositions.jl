@@ -70,7 +70,7 @@ function bloch_messiah(S)
 end
 
 function williamson(SS)
-    n, m = size(S)
+    n, m = size(SS)
     ell = div(n, 2)
     sqrtSS = sqrt(Symmetric(SS))
     sqrtinvSS = inv(sqrtSS)
