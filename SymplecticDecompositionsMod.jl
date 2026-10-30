@@ -72,7 +72,7 @@ Generates a random symplectic matrix of shape 2m x 2m with a specified floating-
 - `prec` -- (optional, default: 1) precision for MultiFloat; it will have the form Float64x{prec}.
 
 ### Output
-2m x 2m random symplectic matrix with specified precision.
+- 2m x 2m random symplectic matrix with specified precision.
 """
 function random_symplectic(m::Int; prec::Int=1)
     type_precision = MultiFloat{Float64, prec}
@@ -105,8 +105,8 @@ where W is unitary and D is diagonal with non-negative entries.
 ### Output
 
 The Takagi decomposition of the input matrix.
-- `D` -- Diagonal matrix with non-negative entries.
-- `W` -- Unitary matrix such that A = W * D * W'.
+- Vector of non-negative entries of the diagonal matrix D.
+- Unitary matrix, W, such that A = W * D * W'.
 """
 function takagi(A::AbstractMatrix{T}) where {T}
     if size(A, 1) != size(A, 2)
@@ -137,9 +137,9 @@ where L and R are symplectic orthogonal, and Gamma is symplectic diagonal and po
 ### Output
 
 The Bloch-Messiah decomposition of the input matrix.
-- `L` -- Symplectic orthogonal matrix.
-- `Gamma` -- Symplectic diagonal matrix.
-- `R` -- Symplectic orthogonal matrix.
+- Symplectic orthogonal matrix L.
+- Vector of entries of the symplectic diagonal matrix Gamma.
+- Symplectic orthogonal matrix R.
 """
 function bloch_messiah(S::AbstractMatrix{T}) where {T}
     if size(S, 1) != size(S, 2)
@@ -178,7 +178,22 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
     return lO, Gamma, rO
 end
 
+"""
+    williamson(A::AbstractMatrix{T}) where {T}
 
+Computes the Williamson decomposition of a real, symmmetric and positive-definite matrix,
+i.e., A = S * T * S', where S is symplectic and T is diagonal with positive entries.
+
+### Input
+
+- `A` -- Matrix for which to compute the decomposition.
+
+### Output
+
+The Williamson decomposition of the input matrix.
+- Symplectic orthogonal matrix S.
+- Vector of entries of the diagonal matrix T.
+"""
 function williamson(A::AbstractMatrix{T}) where {T}
     if size(A, 1) != size(A, 2)
         throw(ArgumentError("Input matrix must be square."))
