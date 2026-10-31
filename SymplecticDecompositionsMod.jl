@@ -142,8 +142,9 @@ The Bloch-Messiah decomposition of the input matrix.
 - Symplectic orthogonal matrix R.
 """
 function bloch_messiah(S::AbstractMatrix{T}) where {T}
-    if size(S, 1) != size(S, 2)
-        throw(ArgumentError("Input matrix must be square."))
+    n, m = size(S)
+    if n != m || n % 2 != 0
+        throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
     if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
@@ -158,7 +159,6 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
     P = V * Diagonal(D) * V'
     O = U * V'
 
-    n = size(P, 1)
     ell = div(n, 2)
     
     A = P[1:ell, 1:ell]
@@ -166,7 +166,7 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
     C = P[ell+1:2*ell, ell+1:2*ell]
     M = A - C + im .* (B + B')
 
-    Lambda, W = takagi(M)
+    Lambda, W = takagi(Symmetric(M))
     Lambda = 0.5 .* Lambda
     OW = [real(W) -imag(W); imag(W) real(W)]
     aux_Lamb_term = sqrt.(Lambda .^ 2 .+ 1)
@@ -177,6 +177,7 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
 
     return lO, Gamma, rO
 end
+
 
 """
     williamson(A::AbstractMatrix{T}) where {T}
@@ -195,8 +196,9 @@ The Williamson decomposition of the input matrix.
 - Vector of entries of the diagonal matrix T.
 """
 function williamson(A::AbstractMatrix{T}) where {T}
-    if size(A, 1) != size(A, 2)
-        throw(ArgumentError("Input matrix must be square."))
+    n, m = size(A)
+    if n != m || n % 2 != 0
+        throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
     if !isapprox(imag(A), zeros(size(A)); atol=1e-10)
@@ -211,7 +213,6 @@ function williamson(A::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be positive definite."))
     end
 
-    n = size(A, 1)
     ell = div(n, 2)
 
     sqrt_A = sqrt(Symmetric(A))
@@ -233,4 +234,117 @@ function williamson(A::AbstractMatrix{T}) where {T}
     phi = 1 ./ phi
 
     return phi, O
+end
+
+
+"""
+    pre_iwasawa(S::AbstractMatrix{T}) where {T}
+
+Computes the pre-Iwasawa decomposition of a real symplectic matrix, i.e., S = E * D * F, 
+where E and D have the structure
+
+E = ⌈    I       0⌉ , D = ⌈ A0    0    ⌉,
+    ⌊ C0*A0^(-1) I⌋       ⌊ 0  A0^(-1) ⌋
+    
+and F is symplectic orthogonal.
+
+### Input
+
+- `S` -- Symplectic matrix for which to compute the decomposition.
+
+### Output
+
+The pre-Iwasawa decomposition of the input matrix.
+- Matrix E.
+- Matrix D.
+- Symplectic orthogonal matrix F.
+"""
+function pre_iwasawa(S::AbstractMatrix{T}) where {T}
+    n, m = size(S)
+    if n != m || n % 2 != 0
+        throw(ArgumentError("Input matrix must be square and of even dimension."))
+    end
+
+    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+        throw(ArgumentError("Input matrix must be real."))
+    end
+
+    if !issymplectic(S)
+        throw(ArgumentError("Input matrix must be symplectic."))
+    end
+
+    ell = div(n, 2)
+    A = S[1:ell, 1:ell]
+    B = S[1:ell, ell+1:2*ell]
+    C = S[ell+1:2*ell, 1:ell]
+    D = S[ell+1:2*ell, ell+1:2*ell]
+
+    A0 = sqrt(Symmetric(A * A' + B * B'))
+    inv_A0 = inv(A0)
+
+    X = inv_A0 * A
+    Y = inv_A0 * B
+
+    C0 = (C * A' + D * B') * inv_A0
+
+    E = [I(ell) zeros(ell, ell); C0*inv_A0 I(ell)]
+    D = [A0 zeros(ell, ell); zeros(ell, ell) inv_A0]
+    F = [X Y; -Y X]
+
+    return E, D, F
+end
+
+
+"""
+    iwasawa(S::AbstractMatrix{T}) where {T}
+
+Computes the Iwasawa decomposition of a real symplectic matrix, i.e., S = E * D * F, 
+where E is nilpotent symplectic, D is symplectic diagonal, and F is symplectic orthogonal.
+
+### Input
+
+- `S` -- Symplectic matrix for which to compute the decomposition.
+
+### Output
+
+The Iwasawa decomposition of the input matrix.
+- Nilpotent symplectic matrix E.
+- Vector of entries of the symplectic diagonal matrix D.
+- Symplectic orthogonal matrix F.
+"""
+function iwasawa(S::AbstractMatrix{T}) where {T}
+    n, m = size(S)
+    if n != m || n % 2 != 0
+        throw(ArgumentError("Input matrix must be square and of even dimension."))
+    end
+
+    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+        throw(ArgumentError("Input matrix must be real."))
+    end
+
+    if !issymplectic(S)
+        throw(ArgumentError("Input matrix must be symplectic."))
+    end
+
+    ell = div(n, 2)
+    E, D, F = pre_iwasawa(S)
+    
+    top_right_block_D = D[1:ell, 1:ell]
+    Q, R = qr(top_right_block_D)
+
+    diag_R = diag(R)
+    abs_diag_R = abs.(diag_R)
+    sign_diag_R = sign.(diag_R)
+    R = R' * Diagonal(1 ./ diag_R)
+    inv_transpose_R = inv(R)'
+    DD = vcat(abs_diag_R, 1 ./ abs_diag_R)
+    OO = [R zeros(ell, ell); zeros(ell, ell) inv_transpose_R]
+
+    Q = Diagonal(sign_diag_R) * Q'
+    AA = [Q zeros(ell, ell); zeros(ell, ell) Q]
+
+    EE = E * OO
+    FF = AA * F
+    
+    return EE, DD, FF
 end
