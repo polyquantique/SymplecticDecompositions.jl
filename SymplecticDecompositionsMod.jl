@@ -26,6 +26,10 @@ function issymplectic(S::AbstractMatrix{T}) where {T}
         return false
     end
 
+    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+        throw(ArgumentError("Input matrix must be real."))
+    end
+
     ell = div(n, 2)
     A = S[1:ell, 1:ell]
     B = S[1:ell, ell+1:2*ell]
