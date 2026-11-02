@@ -27,8 +27,16 @@ function issymplectic(S::AbstractMatrix{T}) where {T}
     end
 
     ell = div(n, 2)
-    Omega = [zeros(ell, ell) I(ell); -I(ell) zeros(ell, ell)]
-    return isapprox(transpose(S) * Omega * S, Omega; atol=1e-10)
+    A = S[1:ell, 1:ell]
+    B = S[1:ell, ell+1:2*ell]
+    C = S[ell+1:2*ell, 1:ell]
+    D = S[ell+1:2*ell, ell+1:2*ell]
+
+    cond1 = isapprox(A' * D - C' * B, I(ell); atol=1e-10)
+    cond2 = isapprox(A' * C, C' * A; atol=1e-10)
+    cond3 = isapprox(B' * D, D' * B; atol=1e-10)
+
+    return cond1 && cond2 && cond3
 end
 
 
