@@ -139,7 +139,7 @@ end
 """
     bloch_messiah(S::AbstractMatrix{T}) where {T}
 
-Computes the Bloch-Messiah (or Euler) decomposition of a real symplectic matrix, i.e., S = L * Gamma * R', 
+Computes the Bloch-Messiah (or Euler) decomposition of a real symplectic matrix, i.e., S = L * Gamma * R, 
 where L and R are symplectic orthogonal, and Gamma is symplectic diagonal and positive-definite.
 
 ### Input
