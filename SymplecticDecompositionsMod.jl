@@ -26,19 +26,19 @@ function issymplectic(S::AbstractMatrix{T}) where {T}
         return false
     end
 
-    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+    if !isapprox(imag(S), zeros(size(S)); atol = 1e-10)
         throw(ArgumentError("Input matrix must be real."))
     end
 
     ell = div(n, 2)
     A = S[1:ell, 1:ell]
-    B = S[1:ell, ell+1:2*ell]
-    C = S[ell+1:2*ell, 1:ell]
-    D = S[ell+1:2*ell, ell+1:2*ell]
+    B = S[1:ell, (ell+1):(2*ell)]
+    C = S[(ell+1):(2*ell), 1:ell]
+    D = S[(ell+1):(2*ell), (ell+1):(2*ell)]
 
-    cond1 = isapprox(A' * D - C' * B, I(ell); atol=1e-10)
-    cond2 = isapprox(A' * C, C' * A; atol=1e-10)
-    cond3 = isapprox(B' * D, D' * B; atol=1e-10)
+    cond1 = isapprox(A' * D - C' * B, I(ell); atol = 1e-10)
+    cond2 = isapprox(A' * C, C' * A; atol = 1e-10)
+    cond3 = isapprox(B' * D, D' * B; atol = 1e-10)
 
     return cond1 && cond2 && cond3
 end
@@ -65,9 +65,9 @@ function premultiply_by_Omega(S::AbstractMatrix{T}) where {T}
 
     ell = div(n, 2)
     A = S[1:ell, 1:ell]
-    B = S[1:ell, ell+1:2*ell]
-    C = S[ell+1:2*ell, 1:ell]
-    D = S[ell+1:2*ell, ell+1:2*ell]
+    B = S[1:ell, (ell+1):(2*ell)]
+    C = S[(ell+1):(2*ell), 1:ell]
+    D = S[(ell+1):(2*ell), (ell+1):(2*ell)]
 
     return [C D; -A -B]
 end
@@ -86,16 +86,16 @@ Generates a random symplectic matrix of shape 2m x 2m with a specified floating-
 ### Output
 - 2m x 2m random symplectic matrix with specified precision.
 """
-function random_symplectic(m::Int; prec::Int=1)
-    type_precision = MultiFloat{Float64, prec}
+function random_symplectic(m::Int; prec::Int = 1)
+    type_precision = MultiFloat{Float64,prec}
 
     U1, U2 = rand(Haar(2), m), rand(Haar(2), m)
     real_U1, imag_U1 = Array{type_precision}(real(U1)), Array{type_precision}(imag(U1))
     real_U2, imag_U2 = Array{type_precision}(real(U2)), Array{type_precision}(imag(U2))
-    
+
     O = [real_U1 -imag_U1; imag_U1 real_U1]
     P = [real_U2 -imag_U2; imag_U2 real_U2]
-    
+
     r = Array{type_precision}(rand(m))
     sq = Diagonal(vcat(exp.(-r), exp.(r)))
     S = O * sq * P
@@ -125,7 +125,7 @@ function takagi(A::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be square."))
     end
 
-    if !isapprox(A, transpose(A); atol=1e-10)
+    if !isapprox(A, transpose(A); atol = 1e-10)
         throw(ArgumentError("Input matrix must be symmetric."))
     end
 
@@ -159,7 +159,7 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
-    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+    if !isapprox(imag(S), zeros(size(S)); atol = 1e-10)
         throw(ArgumentError("Input matrix must be real."))
     end
 
@@ -172,10 +172,10 @@ function bloch_messiah(S::AbstractMatrix{T}) where {T}
     O = U * V'
 
     ell = div(n, 2)
-    
+
     A = P[1:ell, 1:ell]
-    B = P[ell+1:2*ell, 1:ell]
-    C = P[ell+1:2*ell, ell+1:2*ell]
+    B = P[(ell+1):(2*ell), 1:ell]
+    C = P[(ell+1):(2*ell), (ell+1):(2*ell)]
     M = A - C + im .* (B + B')
 
     Lambda, W = takagi(Symmetric(M))
@@ -204,8 +204,8 @@ i.e., A = S * T * S', where S is symplectic and T is diagonal with positive entr
 ### Output
 
 The Williamson decomposition of the input matrix.
-- Symplectic orthogonal matrix S.
 - Vector of entries of the diagonal matrix T.
+- Symplectic orthogonal matrix S.
 """
 function williamson(A::AbstractMatrix{T}) where {T}
     n, m = size(A)
@@ -213,15 +213,15 @@ function williamson(A::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
-    if !isapprox(imag(A), zeros(size(A)); atol=1e-10)
+    if !isapprox(imag(A), zeros(size(A)); atol = 1e-10)
         throw(ArgumentError("Input matrix must be real."))
     end
 
-    if !isapprox(A, transpose(A); atol=1e-10)
+    if !isapprox(A, transpose(A); atol = 1e-10)
         throw(ArgumentError("Input matrix must be symmetric."))
     end
 
-    if !isposdef(A)
+    if !isposdef(A) #isposdef() might be too strict for numerical purposes
         throw(ArgumentError("Input matrix must be positive definite."))
     end
 
@@ -232,14 +232,14 @@ function williamson(A::AbstractMatrix{T}) where {T}
     psi = inv_sqrt_A * premultiply_by_Omega(inv_sqrt_A)
     vals, Op = schur(psi)
 
-    perm = Array(1:2*ell)
-    phi = abs.(diag(vals, 1)[[1:2:2*ell;]])
+    perm = Array(1:(2*ell))
+    phi = abs.(diag(vals, 1)[[1:2:(2*ell);]])
     for i = 1:ell
         if vals[2*i-1, 2*i] <= 0
             perm[2*i-1], perm[2*i] = (perm[2*i], perm[2*i-1])
         end
     end
-    perm = vcat(perm[[1:2:2*ell;]], perm[[2:2:2*ell;]])
+    perm = vcat(perm[[1:2:(2*ell);]], perm[[2:2:(2*ell);]])
     phi = vcat(phi, phi)
 
     O = sqrt_A * Op[:, perm] * Diagonal(sqrt.(phi))
@@ -277,7 +277,7 @@ function pre_iwasawa(S::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
-    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+    if !isapprox(imag(S), zeros(size(S)); atol = 1e-10)
         throw(ArgumentError("Input matrix must be real."))
     end
 
@@ -287,9 +287,9 @@ function pre_iwasawa(S::AbstractMatrix{T}) where {T}
 
     ell = div(n, 2)
     A = S[1:ell, 1:ell]
-    B = S[1:ell, ell+1:2*ell]
-    C = S[ell+1:2*ell, 1:ell]
-    D = S[ell+1:2*ell, ell+1:2*ell]
+    B = S[1:ell, (ell+1):(2*ell)]
+    C = S[(ell+1):(2*ell), 1:ell]
+    D = S[(ell+1):(2*ell), (ell+1):(2*ell)]
 
     A0 = sqrt(Symmetric(A * A' + B * B'))
     inv_A0 = inv(A0)
@@ -330,7 +330,7 @@ function iwasawa(S::AbstractMatrix{T}) where {T}
         throw(ArgumentError("Input matrix must be square and of even dimension."))
     end
 
-    if !isapprox(imag(S), zeros(size(S)); atol=1e-10)
+    if !isapprox(imag(S), zeros(size(S)); atol = 1e-10)
         throw(ArgumentError("Input matrix must be real."))
     end
 
@@ -340,7 +340,7 @@ function iwasawa(S::AbstractMatrix{T}) where {T}
 
     ell = div(n, 2)
     E, D, F = pre_iwasawa(S)
-    
+
     top_right_block_D = D[1:ell, 1:ell]
     Q, R = qr(top_right_block_D)
 
@@ -357,6 +357,6 @@ function iwasawa(S::AbstractMatrix{T}) where {T}
 
     EE = E * OO
     FF = AA * F
-    
+
     return EE, DD, FF
 end
