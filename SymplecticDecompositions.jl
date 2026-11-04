@@ -2,7 +2,6 @@ using LinearAlgebra
 using GenericLinearAlgebra
 using Random
 using RandomMatrices
-using MatrixFactorizations
 using MultiFloats
 using GenericSchur
 

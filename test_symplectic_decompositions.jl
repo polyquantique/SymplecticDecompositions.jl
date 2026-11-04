@@ -1,6 +1,6 @@
 using Test
 using StatsBase
-include("SymplecticDecompositionsMod.jl")
+include("SymplecticDecompositions.jl")
 
 @testset "Test issymplectic() throws for complex matrices" begin
     A = [1 + im 0; 0 1]
