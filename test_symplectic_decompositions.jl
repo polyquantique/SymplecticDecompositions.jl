@@ -2,6 +2,25 @@ using Test
 using StatsBase
 include("SymplecticDecompositions.jl")
 
+@testset "Test multi_float_angle() for real and non-MultiFloat inputs" begin
+    @test multi_float_angle(1.0) == 0.0
+    @test multi_float_angle(-1.0) ≈ pi
+    @test multi_float_angle(0) == 0.0
+    @test multi_float_angle(-1) ≈ pi
+    @test typeof(multi_float_angle(Float32(-1))) == Float32
+    @test typeof(multi_float_angle(big"-1")) == BigFloat
+
+    @test multi_float_angle(complex(1.0, 1.0)) ≈ pi / 4
+    @test multi_float_angle(complex(-1.0, 1.0)) ≈ 3 * pi / 4
+    @test multi_float_angle(complex(-1.0, -1.0)) ≈ -3 * pi / 4
+    @test multi_float_angle(complex(1, -1)) ≈ -pi / 4
+    @test multi_float_angle(complex(0.0, 1.0f0)) ≈ Float32(pi / 2)
+
+    mf = MultiFloat{Float64, 2}(1)
+    @test typeof(multi_float_angle(complex(-mf, mf))) == typeof(mf)
+    @test multi_float_angle(-mf) == oftype(mf, pi)
+end
+
 @testset "Test issymplectic() throws for complex matrices" begin
     A = [1 + im 0; 0 1]
     @test_throws ArgumentError issymplectic(A)

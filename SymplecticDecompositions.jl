@@ -2,8 +2,62 @@ using LinearAlgebra
 using GenericLinearAlgebra
 using Random
 using RandomMatrices
-using MultiFloats
 using GenericSchur
+using MultiFloats
+MultiFloats.use_bigfloat_transcendentals()
+
+
+"""
+    multi_float_mod(x::T, y::T) where {T<:Real}
+
+Computes the modulus of two real numbers while preserving their floating-point precision.
+
+### Input
+
+- `x` -- First number.
+- `y` -- Second number.
+
+### Output
+
+- The modulus of the two numbers.
+"""
+function multi_float_mod(x::T, y::T) where {T<:Real}
+    return x - y * floor(x / y)
+end
+
+
+"""
+    multi_float_angle(z::Union{Real, Complex{<:Real}})
+
+Computes the angle of a real or complex number while preserving its floating-point precision.
+
+### Input
+
+- `z` -- Real or complex number for which to compute the angle.
+
+### Output
+
+- The angle of the complex number.
+"""
+function multi_float_angle(z::Complex{T}) where {T<:Real}
+    x, y = real(z), imag(z)
+    pi_T = oftype(float(x), pi)
+
+    if iszero(x)
+        return iszero(y) ? zero(float(x)) : copysign(pi_T / 2, y)
+    end
+
+    theta = atan(y / x)
+    if x < 0
+        theta += y < 0 ? -pi_T : pi_T
+    end
+    return theta
+end
+
+function multi_float_angle(x::Real)
+    x_float = float(x)
+    return x < 0 ? oftype(x_float, pi) : zero(x_float)
+end
 
 
 """
@@ -130,7 +184,40 @@ function takagi(A::AbstractMatrix{T}) where {T}
 
     U, D, V = svd(A)
     pref = U' * conj(V)
-    sqrt_pref = sqrt(pref)
+
+    #We now compute the square root of pref in a way that avoids jumps from the principal branch
+    #of the complex square root function.
+
+    pT, pQ = schur(pref) #pref is normal, so T is diagonal
+    pref_eivals = diag(pT)
+
+    #Step 1: Find the unique angles of the eigenvalues of pref, mod 2 * pi, and sort them
+    angle_pref_eivals = multi_float_angle.(pref_eivals)
+    period = oftype(angle_pref_eivals[1], 2 * pi)
+    pref_angles = sort(unique(multi_float_mod.(angle_pref_eivals, period)))
+
+    #Step 2: Find the difference between these angles, including the difference between the first and last angle (mod 2 * pi)
+    pref_angles_diff = diff(vcat(pref_angles, pref_angles[1] + period))
+
+    #Step 3: Select the largest difference and find the midpoint of the corresponding arc
+    indx_max_diff = argmax(pref_angles_diff)
+    mid_point = pref_angles[indx_max_diff] + 0.5 * pref_angles_diff[indx_max_diff]
+
+    #Step 4: Wrap the midpooint around 2 * pi and then shift it by -pi, so it is in the range [-pi, pi]
+    shift = multi_float_mod(-mid_point, period) - pi
+
+    #Step 5: Rotate all the eigenvalues so that the midpoint of the largest arc lies at +- pi.
+    #In this the other angles will be far from the branch cut of the complex suare root
+    shifted_pref_eivals = pref_eivals .* exp.(im * shift)
+
+    #Step 6: Find the square root of the rotated eigenvalues, they should lie in the principal branch.
+    #Then compute the square root of the shifted pref.
+    sqrt_shifted_pref_eivals = sqrt.(shifted_pref_eivals)
+    sqrt_shifted_pref = pQ * Diagonal(sqrt_shifted_pref_eivals) * pQ'
+
+    #Step 7: Undo the rotation by rotating by half the angle in the opposite direction
+    sqrt_pref = sqrt_shifted_pref .* exp.(-im * shift / 2)
+
     return D, U * sqrt_pref
 end
 
