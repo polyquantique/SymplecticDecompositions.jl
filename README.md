@@ -6,4 +6,4 @@ This repository implements the matrix decompositions described in:
 
 Martin Houde, Will McCutcheon, Nicolás Quesada, "[Matrix decompositions in Quantum Optics: Takagi/Autonne, Bloch-Messiah/Euler, Iwasawa, and Williamson](https://arxiv.org/abs/2403.04596)."
 
-TODO: Implement docstrings, automated tests and deployment, versioning.
+TODO: Automated tests and deployment, versioning.
