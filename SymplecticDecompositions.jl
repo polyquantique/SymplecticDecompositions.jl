@@ -73,13 +73,17 @@ Checks if a matrix is symplectic.
 
 - `true` if the matrix is symplectic, `false` otherwise.
 """
-function issymplectic(S::AbstractMatrix{T}) where {T}
+function issymplectic(
+    S::AbstractMatrix{T};
+    atol::Float64 = 1e-10,
+    rtol::Float64 = 0.0,
+) where {T}
     n, m = size(S)
     if n != m || n % 2 != 0
         return false
     end
 
-    if !isapprox(imag(S), zeros(size(S)); atol = 1e-10)
+    if !isapprox(imag(S), zeros(size(S)); atol = atol, rtol = rtol)
         throw(ArgumentError("Input matrix must be real."))
     end
 
@@ -89,9 +93,9 @@ function issymplectic(S::AbstractMatrix{T}) where {T}
     C = S[(ell+1):(2*ell), 1:ell]
     D = S[(ell+1):(2*ell), (ell+1):(2*ell)]
 
-    cond1 = isapprox(A' * D - C' * B, I(ell); atol = 1e-10)
-    cond2 = isapprox(A' * C, C' * A; atol = 1e-10)
-    cond3 = isapprox(B' * D, D' * B; atol = 1e-10)
+    cond1 = isapprox(A' * D - C' * B, I(ell); atol = atol, rtol = rtol)
+    cond2 = isapprox(A' * C, C' * A; atol = atol, rtol = rtol)
+    cond3 = isapprox(B' * D, D' * B; atol = atol, rtol = rtol)
 
     return cond1 && cond2 && cond3
 end
@@ -203,7 +207,7 @@ function takagi(A::AbstractMatrix{T}) where {T}
     indx_max_diff = argmax(pref_angles_diff)
     mid_point = pref_angles[indx_max_diff] + 0.5 * pref_angles_diff[indx_max_diff]
 
-    #Step 4: Wrap the midpooint around 2 * pi and then shift it by -pi, so it is in the range [-pi, pi]
+    #Step 4: Wrap the midpoint around 2 * pi and then shift it by -pi, so it is in the range [-pi, pi]
     shift = multi_float_mod(-mid_point, period) - pi
 
     #Step 5: Rotate all the eigenvalues so that the midpoint of the largest arc lies at +- pi.
