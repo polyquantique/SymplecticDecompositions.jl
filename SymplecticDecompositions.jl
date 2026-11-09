@@ -167,6 +167,9 @@ end
 Computes the Takagi decomposition of a complex symmetric matrix, i.e., A = W * D * W', 
 where W is unitary and D is diagonal with non-negative entries.
 
+The algoritm presented here is adapated from the following thewalrus PR:
+https://github.com/XanaduAI/thewalrus/pull/403  
+
 ### Input
 
 - `A` -- Complex symmetric matrix for which to compute the decomposition.

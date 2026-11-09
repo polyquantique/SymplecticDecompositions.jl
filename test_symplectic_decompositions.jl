@@ -16,7 +16,7 @@ include("SymplecticDecompositions.jl")
     @test multi_float_angle(complex(1, -1)) ≈ -pi / 4
     @test multi_float_angle(complex(0.0, 1.0f0)) ≈ Float32(pi / 2)
 
-    mf = MultiFloat{Float64, 2}(1)
+    mf = MultiFloat{Float64,2}(1)
     @test typeof(multi_float_angle(complex(-mf, mf))) == typeof(mf)
     @test multi_float_angle(-mf) == oftype(mf, pi)
 end
@@ -126,6 +126,26 @@ end
             @test isapprox(W, V; atol = 1e-10)
         end
     end
+end
+
+@testset "Test takagi() on matrix close to the square root branch cut" begin
+    """ 
+    This takes inspiration from the reported issue in 
+    https://github.com/polyquantique/SymplecticDecompositions.jl/issues/2
+    """
+
+    A = [
+        0.925 0.0 0.0 0.0;
+        0.0 -0.02399982992272 -0.00489937871047 -0.00500042517513;
+        0.0 -0.00489937871047 -0.00100017007728 0.02449481063548;
+        0.0 -0.00500042517513 0.02449481063548 0.0
+    ]
+
+    D, W = takagi(A)
+
+    @test isapprox(A, W * Diagonal(D) * transpose(W); atol = 1e-10)
+    @test isapprox(W' * W, I(4); atol = 1e-10)
+    @test all(D .>= 0)
 end
 
 @testset "Test bloch_messiah() throws for non-square, odd dimension, complex or non-symplectic matrices" begin
