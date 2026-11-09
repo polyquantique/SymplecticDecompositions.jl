@@ -68,6 +68,8 @@ Checks if a matrix is symplectic.
 ### Input
 
 - `S` -- Matrix to check.
+- `atol` -- (optional, default: 1e-10) absolute tolerance for the check.
+- `rtol` -- (optional, default: 0.0) relative tolerance for the check.
 
 ### Output
 
@@ -131,20 +133,25 @@ end
 
 
 """
-    random_symplectic(m::Int; prec::Int=1)
+    random_symplectic(m::Int; alpha::Float64 = 1.0, prec::Int = 1)
 
 Generates a random symplectic matrix of shape 2m x 2m with a specified floating-point precision.
 
 ### Input
 
 - `m`    -- Number of modes.
+- `alpha` -- (optional, default: 1.0) scaling factor for the squeezing parameters.
 - `prec` -- (optional, default: 1) precision for MultiFloat; it will have the form Float64x{prec}.
 
 ### Output
 - 2m x 2m random symplectic matrix with specified precision.
 """
-function random_symplectic(m::Int; prec::Int = 1)
-    type_precision = MultiFloat{Float64,prec}
+function random_symplectic(m::Int; alpha::Float64 = 1.0, prec::Int = 1)
+    if prec == 1
+        type_precision = Float64
+    else
+        type_precision = MultiFloat{Float64,prec}
+    end
 
     U1, U2 = rand(Haar(2), m), rand(Haar(2), m)
     real_U1, imag_U1 = Array{type_precision}(real(U1)), Array{type_precision}(imag(U1))
@@ -153,7 +160,7 @@ function random_symplectic(m::Int; prec::Int = 1)
     O = [real_U1 -imag_U1; imag_U1 real_U1]
     P = [real_U2 -imag_U2; imag_U2 real_U2]
 
-    r = Array{type_precision}(rand(m))
+    r = Array{type_precision}(alpha * rand(m))
     sq = Diagonal(vcat(exp.(-r), exp.(r)))
     S = O * sq * P
 
